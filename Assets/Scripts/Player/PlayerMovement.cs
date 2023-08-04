@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    [SerializeField] private LayerMask jumpableGround;
     private Rigidbody2D _rigidbody2D;
     private SpriteRenderer sprite;
     private BoxCollider2D boxCollider;
-    [SerializeField] private LayerMask jumpableGround;
     private Animator anim;
     private float jumpForce = 14f;
     private float speedForce = 7f;
