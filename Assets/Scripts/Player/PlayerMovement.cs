@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private LayerMask jumpableGround;
+    [SerializeField] private LayerMask wallLayer;
     private Rigidbody2D _rigidbody2D;
     private SpriteRenderer sprite;
     private BoxCollider2D boxCollider;
@@ -35,6 +36,12 @@ public class PlayerMovement : MonoBehaviour
     {
         directionX = Input.GetAxisRaw("Horizontal");
         _rigidbody2D.velocity = new Vector2(directionX * speedForce, _rigidbody2D.velocity.y);
+
+        if (directionX != 0f)
+        {
+            sprite.transform.rotation = Quaternion.Euler(0f, directionX < 0f ? 180f : 0f, 0f);
+        }
+
         if (Input.GetButtonDown("Jump") && GroundCheck())
         {
             _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, jumpForce);
@@ -64,12 +71,17 @@ public class PlayerMovement : MonoBehaviour
         }
 
         anim.SetInteger("state", (int)state);
-        sprite.transform.rotation = Quaternion.Euler(0f, directionX < 0f ? 180f : 0f, 0f);
+        // sprite.transform.rotation = Quaternion.Euler(0f, directionX < 0f ? 180f : 0f, 0f);
     }
 
     private bool GroundCheck()
     {
         //reminder to recheck what Boxcast is in Google
         return Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, angle, Vector2.down, distance, jumpableGround);
+    }
+
+    private bool WallCheck()
+    {
+        return Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, angle, new Vector2(transform.localScale.x, 0), distance, wallLayer);
     }
 }
