@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private LayerMask jumpableGround;
     [SerializeField] private LayerMask wallLayer;
+    private Player player;
     private Rigidbody2D _rigidbody2D;
     private SpriteRenderer sprite;
     private BoxCollider2D boxCollider;
@@ -19,24 +21,24 @@ public class PlayerMovement : MonoBehaviour
     // Start is called before the first frame update
     private void Start()
     {
+        player = GetComponent<Player>();
+        player.onMove += Move;
         _rigidbody2D = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
         boxCollider = GetComponent<BoxCollider2D>();
     }
 
-    // Update is called once per frame
-    private void Update()
+    private void OnDisable()
     {
-        Move();
-        UpdateAnimation();
+        player.onMove -= Move;
     }
+    // Update is called once per frame
 
-    private void Move()
+    private void Move(object sender, EventArgs e)
     {
         directionX = Input.GetAxisRaw("Horizontal");
         _rigidbody2D.velocity = new Vector2(directionX * speedForce, _rigidbody2D.velocity.y);
-
         if (directionX != 0f)
         {
             sprite.transform.rotation = Quaternion.Euler(0f, directionX < 0f ? 180f : 0f, 0f);
@@ -47,9 +49,10 @@ public class PlayerMovement : MonoBehaviour
             _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, jumpForce);
         }
 
+        AnimUpdate();
     }
 
-    private void UpdateAnimation()
+    private void AnimUpdate()
     {
         MovementState state;
         if (directionX != 0)
@@ -82,6 +85,7 @@ public class PlayerMovement : MonoBehaviour
 
     private bool WallCheck()
     {
-        return Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, angle, new Vector2(transform.localScale.x, 0), distance, wallLayer);
+        return Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, angle, new Vector2(transform.localScale.x, 0f), distance, wallLayer);
     }
+
 }
