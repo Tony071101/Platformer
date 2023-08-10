@@ -17,7 +17,12 @@ public class PlayerMovement : MonoBehaviour
     private float directionX;
     private float angle = 0f;
     private float distance = .1f;
-    private enum MovementState { idle, running, jumping, falling }
+    private bool canDash = true;
+    private bool isDashing;
+    private float dashingPower = 20f;
+    private float dashingTime = 0.2f;
+    private float dashingCd = 1f;
+    private enum MovementState { idle, running, jumping, falling, sliding, dashing }
     // Start is called before the first frame update
     private void Start()
     {
@@ -37,6 +42,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void Move(object sender, EventArgs e)
     {
+        if (isDashing)
+        {
+            return;
+        }
         directionX = Input.GetAxisRaw("Horizontal");
         _rigidbody2D.velocity = new Vector2(directionX * speedForce, _rigidbody2D.velocity.y);
         if (directionX != 0f)
@@ -49,32 +58,36 @@ public class PlayerMovement : MonoBehaviour
             _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, jumpForce);
         }
 
+        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+        {
+            StartCoroutine(Dash());
+        }
+
         AnimUpdate();
     }
 
     private void AnimUpdate()
     {
         MovementState state;
-        if (directionX != 0)
+
+        if (_rigidbody2D.velocity.y > 0.1f)
         {
-            state = MovementState.running;
+            state = MovementState.jumping;
+        }
+        else if (_rigidbody2D.velocity.y < -0.1f)
+        {
+            state = MovementState.falling;
+        }
+        else if (directionX != 0)
+        {
+            state = isDashing ? (!GroundCheck() ? MovementState.dashing : MovementState.sliding) : MovementState.running;
         }
         else
         {
             state = MovementState.idle;
         }
 
-        if (_rigidbody2D.velocity.y > .1f)
-        {
-            state = MovementState.jumping;
-        }
-        else if (_rigidbody2D.velocity.y < -.1f)
-        {
-            state = MovementState.falling;
-        }
-
         anim.SetInteger("state", (int)state);
-        // sprite.transform.rotation = Quaternion.Euler(0f, directionX < 0f ? 180f : 0f, 0f);
     }
 
     private bool GroundCheck()
@@ -88,4 +101,17 @@ public class PlayerMovement : MonoBehaviour
         return Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, angle, new Vector2(transform.localScale.x, 0f), distance, wallLayer);
     }
 
+    private IEnumerator Dash()
+    {
+        canDash = false;
+        isDashing = true;
+        float originalGravity = _rigidbody2D.gravityScale;
+        _rigidbody2D.gravityScale = 0;
+        _rigidbody2D.velocity = new Vector2(directionX * dashingPower, 0f);
+        yield return new WaitForSeconds(dashingTime);
+        _rigidbody2D.gravityScale = originalGravity;
+        isDashing = false;
+        yield return new WaitForSeconds(dashingCd);
+        canDash = true;
+    }
 }
