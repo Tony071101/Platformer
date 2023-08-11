@@ -7,22 +7,38 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private LayerMask jumpableGround;
     [SerializeField] private LayerMask wallLayer;
+    [SerializeField] private Transform wallCheck;
     private Player player;
     private Rigidbody2D _rigidbody2D;
     private SpriteRenderer sprite;
     private BoxCollider2D boxCollider;
     private Animator anim;
+    private bool isFacingRight = true;
+
+    //Moving mechanic
     private float jumpForce = 14f;
     private float speedForce = 7f;
     private float directionX;
     private float angle = 0f;
     private float distance = .1f;
+
+    //Dashing mechanic
     private bool canDash = true;
     private bool isDashing;
     private float dashingPower = 20f;
-    private float dashingTime = 0.2f;
+    private float dashingTime = 0.3f;
     private float dashingCd = 1f;
-    private enum MovementState { idle, running, jumping, falling, sliding, dashing }
+
+    //Wall slide and Wall jump mechanic
+    private bool isWallSliding;
+    private float wallSlidingSpeed = 2f;
+    private float radius = 0.2f;
+    private bool isWallJumping;
+    private float wallJumpingDirection;
+    private float wallJumpingTime = 0.2f;
+    private float wallJumpingCounter;
+    private float wallJumpingDuration = 0.4f;
+    private enum MovementState { idle, running, jumping, falling, sliding, dashing, wallSliding }
     // Start is called before the first frame update
     private void Start()
     {
@@ -48,10 +64,6 @@ public class PlayerMovement : MonoBehaviour
         }
         directionX = Input.GetAxisRaw("Horizontal");
         _rigidbody2D.velocity = new Vector2(directionX * speedForce, _rigidbody2D.velocity.y);
-        if (directionX != 0f)
-        {
-            sprite.transform.rotation = Quaternion.Euler(0f, directionX < 0f ? 180f : 0f, 0f);
-        }
 
         if (Input.GetButtonDown("Jump") && GroundCheck())
         {
@@ -63,7 +75,16 @@ public class PlayerMovement : MonoBehaviour
             StartCoroutine(Dash());
         }
 
+        if (!isWallJumping)
+        {
+            Flip();
+        }
+
         AnimUpdate();
+
+        WallSlide();
+
+        WallJump();
     }
 
     private void AnimUpdate()
@@ -77,10 +98,28 @@ public class PlayerMovement : MonoBehaviour
         else if (_rigidbody2D.velocity.y < -0.1f)
         {
             state = MovementState.falling;
+            if (isWallSliding)
+            {
+                state = MovementState.wallSliding;
+            }
         }
         else if (directionX != 0)
         {
-            state = isDashing ? (!GroundCheck() ? MovementState.dashing : MovementState.sliding) : MovementState.running;
+            if (isDashing)
+            {
+                if (!GroundCheck())
+                {
+                    state = MovementState.dashing;
+                }
+                else
+                {
+                    state = MovementState.sliding;
+                }
+            }
+            else
+            {
+                state = MovementState.running;
+            }
         }
         else
         {
@@ -88,6 +127,17 @@ public class PlayerMovement : MonoBehaviour
         }
 
         anim.SetInteger("state", (int)state);
+    }
+
+    private void Flip()
+    {
+        if (isFacingRight && directionX < 0f || !isFacingRight && directionX > 0f)
+        {
+            isFacingRight = !isFacingRight;
+            Vector3 localScale = transform.localScale;
+            localScale.x *= -1f;
+            transform.localScale = localScale;
+        }
     }
 
     private bool GroundCheck()
@@ -98,7 +148,7 @@ public class PlayerMovement : MonoBehaviour
 
     private bool WallCheck()
     {
-        return Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, angle, new Vector2(transform.localScale.x, 0f), distance, wallLayer);
+        return Physics2D.OverlapCircle(wallCheck.position, radius, wallLayer);
     }
 
     private IEnumerator Dash()
@@ -113,5 +163,55 @@ public class PlayerMovement : MonoBehaviour
         isDashing = false;
         yield return new WaitForSeconds(dashingCd);
         canDash = true;
+    }
+
+    private void WallSlide()
+    {
+        if (WallCheck() && !GroundCheck() && directionX != 0)
+        {
+            isWallSliding = true;
+            _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, Mathf.Clamp(_rigidbody2D.velocity.y, -wallSlidingSpeed, float.MaxValue));
+        }
+        else
+        {
+            isWallSliding = false;
+        }
+    }
+
+    private void WallJump()
+    {
+        if (isWallSliding)
+        {
+            isWallJumping = false;
+            wallJumpingDirection = -transform.localScale.x;
+            wallJumpingCounter = wallJumpingTime;
+
+            CancelInvoke(nameof(StopWallJumping));
+        }
+        else
+        {
+            wallJumpingCounter -= Time.deltaTime;
+        }
+
+        if (Input.GetButtonDown("Jump") && wallJumpingCounter > 0f)
+        {
+            isWallJumping = true;
+            _rigidbody2D.velocity = new Vector2(wallJumpingDirection * jumpForce, jumpForce);
+            wallJumpingCounter = 0f;
+            if (transform.localScale.x != wallJumpingDirection)
+            {
+                isFacingRight = !isFacingRight;
+                Vector3 localScale = transform.localScale;
+                localScale.x = wallJumpingDirection;
+                transform.localScale = localScale;
+            }
+        }
+
+        Invoke(nameof(StopWallJumping), wallJumpingDuration);
+    }
+
+    private void StopWallJumping()
+    {
+        isWallJumping = false;
     }
 }
