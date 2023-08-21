@@ -5,6 +5,7 @@ using System;
 
 public class PlayerAttack : MonoBehaviour
 {
+    private int damage = 10;
     private Player player;
     private Animator animator;
     // Start is called before the first frame update
@@ -12,9 +13,9 @@ public class PlayerAttack : MonoBehaviour
 
     private void Start()
     {
-        player = GetComponent<Player>();
+        player = GetComponentInParent<Player>();
         player.onAttack += Attack;
-        animator = GetComponent<Animator>();
+        animator = GetComponentInParent<Animator>();
     }
 
     private void OnDisable()
@@ -26,4 +27,6 @@ public class PlayerAttack : MonoBehaviour
     {
         animator.SetTrigger("attackOne");
     }
+
+    public int GetDamage() => damage;
 }

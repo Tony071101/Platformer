@@ -3094,7 +3094,8 @@ GameObject:
   - component: {fileID: 1579548685}
   - component: {fileID: 1579548687}
   - component: {fileID: 1579548686}
-  m_Layer: 0
+  - component: {fileID: 1579548688}
+  m_Layer: 10
   m_Name: Enemy
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -3110,7 +3111,7 @@ BoxCollider2D:
   m_GameObject: {fileID: 1579548680}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 781119c377f1114488910b787824f8cf, type: 2}
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
@@ -3135,14 +3136,14 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1579548680}
-  m_BodyType: 2
+  m_BodyType: 0
   m_Simulated: 1
   m_UseFullKinematicContacts: 1
-  m_UseAutoMass: 1
-  m_Mass: 2.7814102
+  m_UseAutoMass: 0
+  m_Mass: 1000
   m_LinearDrag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 1
+  m_GravityScale: 1.5
   m_Material: {fileID: 0}
   m_Interpolate: 0
   m_SleepingMode: 1
@@ -3263,6 +3264,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dbe3e21b850c8c44a0695d2a5e9127b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  knockBack: {x: 2, y: 2}
+--- !u!114 &1579548688
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579548680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8735cb8f8ff5ec34c9721ee941a434e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1744096892
 GameObject:
   m_ObjectHideFlags: 0
@@ -3307,6 +3321,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1887589046}
   - component: {fileID: 1887589047}
+  - component: {fileID: 1887589048}
   m_Layer: 9
   m_Name: SwordAttack
   m_TagString: Untagged
@@ -3365,6 +3380,18 @@ PolygonCollider2D:
       - {x: 2.080595, y: -0.2584877}
       - {x: 1.7522451, y: 0.6790774}
       - {x: 1.4707303, y: 1.1833887}
+--- !u!114 &1887589048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1887589045}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a34f2822dfc19245bdb5ba4595af4a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2022550930
 GameObject:
   m_ObjectHideFlags: 0
@@ -3380,7 +3407,6 @@ GameObject:
   - component: {fileID: 2022550936}
   - component: {fileID: 2022550938}
   - component: {fileID: 2022550939}
-  - component: {fileID: 2022550940}
   - component: {fileID: 2022550937}
   m_Layer: 7
   m_Name: Player
@@ -3570,18 +3596,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   wallCheck: {fileID: 15096489}
---- !u!114 &2022550940
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2022550930}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a34f2822dfc19245bdb5ba4595af4a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2050243999
 GameObject:
   m_ObjectHideFlags: 0
@@ -3592,6 +3606,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2050244000}
   - component: {fileID: 2050244001}
+  - component: {fileID: 2050244002}
   m_Layer: 9
   m_Name: SwordAttack_2
   m_TagString: Untagged
@@ -3653,3 +3668,15 @@ PolygonCollider2D:
       - {x: 1.6681556, y: -0.2584877}
       - {x: 1.6862547, y: 0.2006475}
       - {x: 1.5119742, y: 0.54823196}
+--- !u!114 &2050244002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2050243999}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a34f2822dfc19245bdb5ba4595af4a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

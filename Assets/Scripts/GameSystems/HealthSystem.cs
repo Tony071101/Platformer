@@ -8,27 +8,20 @@ public class HealthSystem : MonoBehaviour
     private Rigidbody2D _rigidbody2D;
     private Animator anim;
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         anim = GetComponent<Animator>();
         _rigidbody2D = GetComponent<Rigidbody2D>();
     }
 
-    // Update is called once per frame
-    void Update()
+    public void Hit(int damage, ref int health)
     {
-
-    }
-
-    private void OnCollisionEnter2D(Collision2D other)
-    {
-        //Notice that this only Die when player collide with Enemy
-        //Will be adjust to can pass through Enemy
-        //And only Die when take enemy hit or health return to 0.
-        if (other.gameObject.CompareTag("Enemy"))
+        health -= damage;
+        if (health <= 0)
         {
             Die();
         }
+        Debug.Log("Current health: " + health);
     }
 
     private void Die()
@@ -37,8 +30,4 @@ public class HealthSystem : MonoBehaviour
         anim.SetTrigger("death");
     }
 
-    private void RestartLevel()
-    {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
 }
