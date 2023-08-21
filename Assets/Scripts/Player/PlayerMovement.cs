@@ -14,6 +14,9 @@ public class PlayerMovement : MonoBehaviour
     private BoxCollider2D boxCollider;
     private Animator anim;
     private bool isFacingRight = true;
+    private PlayerState state;
+
+
 
     //Moving mechanic
     private float jumpForce = 14f;
@@ -38,7 +41,7 @@ public class PlayerMovement : MonoBehaviour
     private float wallJumpingTime = 0.2f;
     private float wallJumpingCounter;
     private float wallJumpingDuration = 0.4f;
-    private enum MovementState { idle, running, jumping, falling, sliding, dashing, wallSliding }
+    // private enum MovementState { idle, running, jumping, falling, sliding, dashing, wallSliding }
     // Start is called before the first frame update
     private void Start()
     {
@@ -50,6 +53,13 @@ public class PlayerMovement : MonoBehaviour
         boxCollider = GetComponent<BoxCollider2D>();
     }
 
+    private bool CanMove
+    {
+        get
+        {
+            return anim.GetBool("canMove");
+        }
+    }
     private void OnDisable()
     {
         player.onMove -= Move;
@@ -63,44 +73,50 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
         directionX = Input.GetAxisRaw("Horizontal");
-        _rigidbody2D.velocity = new Vector2(directionX * speedForce, _rigidbody2D.velocity.y);
-
-        if (Input.GetButtonDown("Jump") && GroundCheck())
+        if (CanMove)
         {
-            _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, jumpForce);
+            _rigidbody2D.velocity = new Vector2(directionX * speedForce, _rigidbody2D.velocity.y);
+
+            if (Input.GetButtonDown("Jump") && GroundCheck())
+            {
+                _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, jumpForce);
+            }
+
+            if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+            {
+                StartCoroutine(Dash());
+            }
+
+            if (!isWallJumping)
+            {
+                Flip();
+            }
+
+            WallSlide();
+
+            WallJump();
         }
-
-        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+        else
         {
-            StartCoroutine(Dash());
-        }
-
-        if (!isWallJumping)
-        {
-            Flip();
+            return;
         }
 
         AnimUpdate();
 
-        WallSlide();
-
-        WallJump();
     }
 
     private void AnimUpdate()
     {
-        MovementState state;
-
         if (_rigidbody2D.velocity.y > 0.1f)
         {
-            state = MovementState.jumping;
+            state = PlayerState.jumping;
         }
         else if (_rigidbody2D.velocity.y < -0.1f)
         {
-            state = MovementState.falling;
+            state = PlayerState.falling;
             if (isWallSliding)
             {
-                state = MovementState.wallSliding;
+                state = PlayerState.wallSliding;
             }
         }
         else if (directionX != 0)
@@ -109,21 +125,21 @@ public class PlayerMovement : MonoBehaviour
             {
                 if (!GroundCheck())
                 {
-                    state = MovementState.dashing;
+                    state = PlayerState.dashing;
                 }
                 else
                 {
-                    state = MovementState.sliding;
+                    state = PlayerState.sliding;
                 }
             }
             else
             {
-                state = MovementState.running;
+                state = PlayerState.running;
             }
         }
         else
         {
-            state = MovementState.idle;
+            state = PlayerState.idle;
         }
 
         anim.SetInteger("state", (int)state);
