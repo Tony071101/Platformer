@@ -9,6 +9,10 @@ public class Player : MonoBehaviour
     public static Player Instance { get; private set; }
     public event EventHandler onMove;
     public event EventHandler onAttack;
+    public event Action<Vector2> onKnockBack;
+    private HealthSystem healthSystem;
+    private Animator anim;
+    [SerializeField] private Vector2 knockBack;
     private void Awake()
     {
         if (Instance != null)
@@ -16,10 +20,11 @@ public class Player : MonoBehaviour
             Destroy(this.gameObject);
         }
         Instance = this;
-        DontDestroyOnLoad(this.gameObject);
     }
     private void Start()
     {
+        anim = GetComponent<Animator>();
+        healthSystem = GetComponent<HealthSystem>();
     }
 
     // Update is called once per frame
@@ -41,6 +46,15 @@ public class Player : MonoBehaviour
     private void Attack()
     {
         onAttack?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("EnemyHitBox"))
+        {
+            anim.SetTrigger("hurt");
+            onKnockBack?.Invoke(knockBack);
+        }
     }
 
 }

@@ -10,5 +10,5 @@ public enum PlayerState
     falling,
     sliding,
     dashing,
-    wallSliding
+    wallSliding,
 }

@@ -16,12 +16,11 @@ public class HealthSystem : MonoBehaviour
 
     public void Hit(int damage, ref int health)
     {
-        health -= damage;
+        // health -= damage;
         if (health <= 0)
         {
             Die();
         }
-        Debug.Log("Current health: " + health);
     }
 
     private void Die()

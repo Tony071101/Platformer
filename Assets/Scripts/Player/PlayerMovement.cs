@@ -16,8 +16,6 @@ public class PlayerMovement : MonoBehaviour
     private bool isFacingRight = true;
     private PlayerState state;
 
-
-
     //Moving mechanic
     private float jumpForce = 14f;
     private float speedForce = 7f;
@@ -41,12 +39,14 @@ public class PlayerMovement : MonoBehaviour
     private float wallJumpingTime = 0.2f;
     private float wallJumpingCounter;
     private float wallJumpingDuration = 0.4f;
+    private bool isKnockedBack = false;
     // private enum MovementState { idle, running, jumping, falling, sliding, dashing, wallSliding }
     // Start is called before the first frame update
     private void Start()
     {
         player = GetComponent<Player>();
         player.onMove += Move;
+        player.onKnockBack += IsKnockedBack;
         _rigidbody2D = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
@@ -63,26 +63,29 @@ public class PlayerMovement : MonoBehaviour
     private void OnDisable()
     {
         player.onMove -= Move;
+        player.onKnockBack -= IsKnockedBack;
     }
     // Update is called once per frame
 
     private void Move(object sender, EventArgs e)
     {
+        directionX = Input.GetAxisRaw("Horizontal");
         if (isDashing)
         {
             return;
         }
-        directionX = Input.GetAxisRaw("Horizontal");
         if (CanMove)
         {
-            _rigidbody2D.velocity = new Vector2(directionX * speedForce, _rigidbody2D.velocity.y);
-
+            if (!isKnockedBack)
+            {
+                _rigidbody2D.velocity = new Vector2(directionX * speedForce, _rigidbody2D.velocity.y);
+            }
             if (Input.GetButtonDown("Jump") && GroundCheck())
             {
                 _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, jumpForce);
             }
 
-            if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+            if (Input.GetKeyDown(KeyCode.LeftShift) && canDash && directionX != 0 && !WallCheck())
             {
                 StartCoroutine(Dash());
             }
@@ -95,10 +98,6 @@ public class PlayerMovement : MonoBehaviour
             WallSlide();
 
             WallJump();
-        }
-        else
-        {
-            return;
         }
 
         AnimUpdate();
@@ -229,5 +228,17 @@ public class PlayerMovement : MonoBehaviour
     private void StopWallJumping()
     {
         isWallJumping = false;
+    }
+    private void IsKnockedBack(Vector2 knockBack)
+    {
+        isKnockedBack = true;
+        _rigidbody2D.velocity = new Vector2(knockBack.x, _rigidbody2D.velocity.y + knockBack.y);
+        StartCoroutine(ResetKnockBack());
+    }
+
+    private IEnumerator ResetKnockBack()
+    {
+        yield return new WaitForSeconds(0.2f); // Đợi trong khoảng thời gian xung đột
+        isKnockedBack = false;
     }
 }
