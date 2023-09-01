@@ -14,19 +14,39 @@ public class HealthSystem : MonoBehaviour
         _rigidbody2D = GetComponent<Rigidbody2D>();
     }
 
-    public void Hit(int damage, ref int health)
+    public int Hit(int currentHealth, int damage)
     {
-        // health -= damage;
-        if (health <= 0)
-        {
-            Die();
-        }
+        currentHealth -= damage;
+        // if (currentHealth <= 0)
+        // {
+        //     Die();
+        // }
+        return currentHealth;
     }
 
-    private void Die()
-    {
-        _rigidbody2D.bodyType = RigidbodyType2D.Static;
-        anim.SetTrigger("death");
-    }
+    // private void Die()
+    // {
+    //     _rigidbody2D.bodyType = RigidbodyType2D.Static;
+    //     anim.SetTrigger("death");
+    //     // string objectTag = gameObject.tag;
+    //     // StartCoroutine(DieWithDelay(objectTag));
+    // }
 
+    // private IEnumerator DieWithDelay(string tag)
+    // {
+    //     _rigidbody2D.bodyType = RigidbodyType2D.Static;
+    //     anim.SetTrigger("death");
+    //     float delayTime = 0f;
+    //     if (tag == "Player")
+    //     {
+    //         delayTime = 1f;
+    //     }
+    //     else if (tag == "Enemy")
+    //     {
+    //         delayTime = 0.2f;
+    //     }
+    //     yield return new WaitForSeconds(delayTime);
+        
+    //     Destroy(gameObject);
+    // }
 }

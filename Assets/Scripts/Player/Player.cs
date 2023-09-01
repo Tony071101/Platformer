@@ -11,7 +11,13 @@ public class Player : MonoBehaviour
     public event EventHandler onAttack;
     public event Action<Vector2> onKnockBack;
     private HealthSystem healthSystem;
+    private Enemy enemy;
     private Animator anim;
+    private int health = 30;
+    private int damage = 10;
+    private bool isDead = false;
+    private int enemyDamage;
+    private Rigidbody2D _rigidbody2D;
     [SerializeField] private Vector2 knockBack;
     private void Awake()
     {
@@ -25,6 +31,8 @@ public class Player : MonoBehaviour
     {
         anim = GetComponent<Animator>();
         healthSystem = GetComponent<HealthSystem>();
+        enemy = FindObjectOfType<Enemy>();
+        _rigidbody2D = GetComponent<Rigidbody2D>();
     }
 
     // Update is called once per frame
@@ -38,6 +46,8 @@ public class Player : MonoBehaviour
         }
     }
 
+
+
     private void Move()
     {
         onMove?.Invoke(this, EventArgs.Empty);
@@ -50,11 +60,26 @@ public class Player : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.layer == LayerMask.NameToLayer("EnemyHitBox"))
+        if (!isDead && other.gameObject.layer == LayerMask.NameToLayer("EnemyHitBox"))
         {
+            enemyDamage = enemy.GetEnemyDamage();
+            health = healthSystem.Hit(health, enemyDamage);
+            Debug.LogError($"Player being hit, Current health: {health}");
+            if(health == 0 ){
+                Die();
+            }
             anim.SetTrigger("hurt");
             onKnockBack?.Invoke(knockBack);
         }
     }
 
+    private void Die()
+    {
+        isDead = true;
+        _rigidbody2D.bodyType = RigidbodyType2D.Static;
+        anim.SetTrigger("death");
+    }
+
+    public Vector2 GetPlayerPos() => this.gameObject.transform.position;
+    public int GetDamage() => damage;
 }

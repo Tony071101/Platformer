@@ -33,6 +33,14 @@ public class EnemyMovement : MonoBehaviour
         Move();
     }
 
+    private bool CanMove
+    {
+        get
+        {
+            return anim.GetBool("canMove");
+        }
+    }
+
     private void Move()
     {
 
@@ -46,14 +54,16 @@ public class EnemyMovement : MonoBehaviour
         // }
 
         //Rotate Y when moving left or right
-        if (WallCheck())
+        if(CanMove)
         {
-            transform.localScale = new Vector2(transform.localScale.x * -1f, transform.localScale.y);
-            moveSpeed *= -1f;
-        }
+            if (WallCheck())
+            {
+                transform.localScale = new Vector2(transform.localScale.x * -1f, transform.localScale.y);
+                moveSpeed *= -1f;
+            }
 
-        _rigidbody2D.velocity = new Vector2(moveSpeed, _rigidbody2D.velocity.y);
-        // transform.position = Vector2.MoveTowards(transform.position, wayPoints[currentWaypointIndex].transform.position, Time.deltaTime * moveSpeed);
+            _rigidbody2D.velocity = new Vector2(moveSpeed, _rigidbody2D.velocity.y);
+        }        
 
         //Animation
         MovementState state;

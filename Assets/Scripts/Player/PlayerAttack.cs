@@ -5,7 +5,6 @@ using System;
 
 public class PlayerAttack : MonoBehaviour
 {
-    private int damage = 10;
     private Player player;
     private Animator animator;
     // Start is called before the first frame update
@@ -28,5 +27,5 @@ public class PlayerAttack : MonoBehaviour
         animator.SetTrigger("attackOne");
     }
 
-    public int GetDamage() => damage;
+    
 }

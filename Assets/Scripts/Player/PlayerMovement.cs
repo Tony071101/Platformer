@@ -15,6 +15,7 @@ public class PlayerMovement : MonoBehaviour
     private Animator anim;
     private bool isFacingRight = true;
     private PlayerState state;
+    private Enemy enemy;
 
     //Moving mechanic
     private float jumpForce = 14f;
@@ -51,6 +52,7 @@ public class PlayerMovement : MonoBehaviour
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
         boxCollider = GetComponent<BoxCollider2D>();
+        enemy = FindObjectOfType<Enemy>();
     }
 
     private bool CanMove
@@ -232,7 +234,8 @@ public class PlayerMovement : MonoBehaviour
     private void IsKnockedBack(Vector2 knockBack)
     {
         isKnockedBack = true;
-        _rigidbody2D.velocity = new Vector2(knockBack.x, _rigidbody2D.velocity.y + knockBack.y);
+        Vector2 knockbackDirection = ((Vector2)transform.position - enemy.GetEnemyPos()).normalized;
+        _rigidbody2D.velocity = new Vector2(knockBack.x * knockbackDirection.x, knockBack.y);
         StartCoroutine(ResetKnockBack());
     }
 
