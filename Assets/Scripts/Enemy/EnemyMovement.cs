@@ -43,20 +43,10 @@ public class EnemyMovement : MonoBehaviour
 
     private void Move()
     {
-
-        // if (Vector2.Distance(wayPoints[currentWaypointIndex].transform.position, transform.position) < distance)
-        // {
-        //     currentWaypointIndex++;
-        //     if (currentWaypointIndex >= wayPoints.Length)
-        //     {
-        //         currentWaypointIndex = 0;
-        //     }
-        // }
-
         //Rotate Y when moving left or right
         if(CanMove)
         {
-            if (WallCheck())
+            if (WallCheck() || !EdgeCheck())
             {
                 transform.localScale = new Vector2(transform.localScale.x * -1f, transform.localScale.y);
                 moveSpeed *= -1f;
@@ -80,5 +70,18 @@ public class EnemyMovement : MonoBehaviour
     private bool WallCheck()
     {
         return Physics2D.OverlapCircle(wallCheck.position, radius, wallLayer);
+    }
+
+    private bool EdgeCheck()
+    {
+        // Cast a ray downwards from the enemy's feet
+        Vector2 rayStart = transform.position - new Vector3(0f, GetComponent<Collider2D>().bounds.extents.y, 0f);
+        Vector2 rayDirection = -transform.up;
+        float rayDistance = 3f; // Adjust this value as needed
+
+        RaycastHit2D hit = Physics2D.Raycast(rayStart, rayDirection, rayDistance);
+
+        // If the ray doesn't hit anything, it means the enemy is at the edge of a platform
+        return hit.collider != null;
     }
 }

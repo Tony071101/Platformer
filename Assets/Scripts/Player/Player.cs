@@ -13,11 +13,11 @@ public class Player : MonoBehaviour
     private HealthSystem healthSystem;
     private Enemy enemy;
     private Animator anim;
-    private int health = 30;
-    private int damage = 10;
+    private int health = 100;
     private bool isDead = false;
     private int enemyDamage;
     private Rigidbody2D _rigidbody2D;
+
     [SerializeField] private Vector2 knockBack;
     private void Awake()
     {
@@ -65,7 +65,7 @@ public class Player : MonoBehaviour
             enemyDamage = enemy.GetEnemyDamage();
             health = healthSystem.Hit(health, enemyDamage);
             Debug.LogError($"Player being hit, Current health: {health}");
-            if(health == 0 ){
+            if(health <= 0 ){
                 Die();
             }
             anim.SetTrigger("hurt");
@@ -79,7 +79,5 @@ public class Player : MonoBehaviour
         _rigidbody2D.bodyType = RigidbodyType2D.Static;
         anim.SetTrigger("death");
     }
-
     public Vector2 GetPlayerPos() => this.gameObject.transform.position;
-    public int GetDamage() => damage;
 }

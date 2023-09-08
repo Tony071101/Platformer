@@ -7,9 +7,9 @@ public class PlayerAttack : MonoBehaviour
 {
     private Player player;
     private Animator animator;
+    [SerializeField] private int damage;
+    public int Damage { get { return damage; } }
     // Start is called before the first frame update
-
-
     private void Start()
     {
         player = GetComponentInParent<Player>();
@@ -24,8 +24,6 @@ public class PlayerAttack : MonoBehaviour
 
     private void Attack(object sender, EventArgs e)
     {
-        animator.SetTrigger("attackOne");
+        animator.SetTrigger("attack");
     }
-
-    
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    private int health = 30;
+    private int health = 100;
     private int damage = 10;
     private int playerDamage;
     private HealthSystem healthSystem;
@@ -15,6 +15,8 @@ public class Enemy : MonoBehaviour
     private bool _hasTarget = false;
     private Player player;
     private bool isDead = false;
+    private bool canTakeDamage = true;
+    private float attackedCDTime = .1f;
 
     // Start is called before the first frame update
     private void Start()
@@ -45,14 +47,25 @@ public class Enemy : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!isDead && collision.gameObject.layer == LayerMask.NameToLayer("PlayerHitBox"))
+        if (!isDead && canTakeDamage && collision.gameObject.layer == LayerMask.NameToLayer("PlayerHitBox"))
         {
-            playerDamage = player.GetDamage();
+            canTakeDamage = false; // Prevent further damage for a short period
+            StartCoroutine(EnableDamageAfterCooldown());
+            
+            PlayerAttack playerAttack = collision.gameObject.GetComponent<PlayerAttack>();
+            if (playerAttack != null)
+            {
+                playerDamage = playerAttack.Damage;
+            }
+            else
+            {
+                playerDamage = 0; // Default damage if the PlayerAttack script is missing
+            }
             health = healthSystem.Hit(health, playerDamage);
-            Debug.LogError($"Enemy being hit, Current health: {health}");
+            Debug.LogError($"Enemy being hit, damage taken: {playerDamage}");
             anim.SetTrigger("Hurt");
             IsKnockedBack(knockBack);
-            if (health == 0)
+            if (health <= 0)
             {
                 Die();
             }
@@ -70,6 +83,12 @@ public class Enemy : MonoBehaviour
     {
         Vector2 knockbackDirection = ((Vector2)transform.position - player.GetPlayerPos()).normalized;
         _rigidbody2D.velocity = new Vector2(knockBack.x * -knockbackDirection.x, knockBack.y);
+    }
+
+    private IEnumerator EnableDamageAfterCooldown()
+    {
+        yield return new WaitForSeconds(attackedCDTime); // Adjust the cooldown time as needed
+        canTakeDamage = true;
     }
 
     public Vector2 GetEnemyPos() => this.gameObject.transform.position;

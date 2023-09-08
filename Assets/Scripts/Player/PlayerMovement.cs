@@ -82,7 +82,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 _rigidbody2D.velocity = new Vector2(directionX * speedForce, _rigidbody2D.velocity.y);
             }
-            if (Input.GetButtonDown("Jump") && GroundCheck())
+            if (Input.GetButtonDown("Jump") && (GroundCheck() || WallCheck()))
             {
                 _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, jumpForce);
             }
