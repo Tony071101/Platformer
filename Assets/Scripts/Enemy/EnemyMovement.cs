@@ -7,6 +7,7 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField] private LayerMask jumpableGround;
     [SerializeField] private LayerMask wallLayer;
     [SerializeField] private Transform wallCheck;
+    [SerializeField] private float rayDistance;
     private float moveSpeed = -2f;
     private Animator anim;
     private Rigidbody2D _rigidbody2D;
@@ -77,7 +78,6 @@ public class EnemyMovement : MonoBehaviour
         // Cast a ray downwards from the enemy's feet
         Vector2 rayStart = transform.position - new Vector3(0f, GetComponent<Collider2D>().bounds.extents.y, 0f);
         Vector2 rayDirection = -transform.up;
-        float rayDistance = 3f; // Adjust this value as needed
 
         RaycastHit2D hit = Physics2D.Raycast(rayStart, rayDirection, rayDistance);
 
