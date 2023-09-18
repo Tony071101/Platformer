@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Enemy : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class Enemy : MonoBehaviour
     private bool isDead = false;
     private bool canTakeDamage = true;
     private float attackedCDTime = .1f;
+    public event EventHandler onBeingHitByPlayer;
 
     // Start is called before the first frame update
     private void Start()
@@ -62,13 +64,13 @@ public class Enemy : MonoBehaviour
                 playerDamage = 0; // Default damage if the PlayerAttack script is missing
             }
             health = healthSystem.Hit(health, playerDamage);
-            Debug.LogError($"Enemy being hit, damage taken: {playerDamage}");
-            anim.SetTrigger("Hurt");
-            IsKnockedBack(knockBack);
             if (health <= 0)
             {
                 Die();
             }
+            anim.SetTrigger("Hurt");
+            IsKnockedBack(knockBack);
+            onBeingHitByPlayer?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -77,6 +79,7 @@ public class Enemy : MonoBehaviour
         isDead = true;
         _rigidbody2D.bodyType = RigidbodyType2D.Static;
         anim.SetTrigger("death");
+        Destroy(this.gameObject, 2f);
     }
 
     private void IsKnockedBack(Vector2 knockBack)
@@ -93,4 +96,5 @@ public class Enemy : MonoBehaviour
 
     public Vector2 GetEnemyPos() => this.gameObject.transform.position;
     public int GetEnemyDamage() => damage;
+    public int GetPlayerDamage() => playerDamage;
 }

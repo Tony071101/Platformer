@@ -9,6 +9,7 @@ public class Player : MonoBehaviour
     public static Player Instance { get; private set; }
     public event EventHandler onMove;
     public event EventHandler onAttack;
+    public event EventHandler onBeingHit;
     public event Action<Vector2> onKnockBack;
     private HealthSystem healthSystem;
     private Enemy enemy;
@@ -64,12 +65,12 @@ public class Player : MonoBehaviour
         {
             enemyDamage = enemy.GetEnemyDamage();
             health = healthSystem.Hit(health, enemyDamage);
-            Debug.LogError($"Player being hit, Current health: {health}");
             if(health <= 0 ){
                 Die();
             }
             anim.SetTrigger("hurt");
             onKnockBack?.Invoke(knockBack);
+            onBeingHit?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -80,4 +81,6 @@ public class Player : MonoBehaviour
         anim.SetTrigger("death");
     }
     public Vector2 GetPlayerPos() => this.gameObject.transform.position;
+
+    public int GetPlayerHealth() => health;
 }

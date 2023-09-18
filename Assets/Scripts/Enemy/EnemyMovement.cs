@@ -7,7 +7,8 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField] private LayerMask jumpableGround;
     [SerializeField] private LayerMask wallLayer;
     [SerializeField] private Transform wallCheck;
-    [SerializeField] private float rayDistance;
+    [SerializeField] private Transform edgeCheck;
+    [SerializeField] private Transform groundCheck;
     private float moveSpeed = -2f;
     private Animator anim;
     private Rigidbody2D _rigidbody2D;
@@ -47,7 +48,7 @@ public class EnemyMovement : MonoBehaviour
         //Rotate Y when moving left or right
         if(CanMove)
         {
-            if (WallCheck() || !EdgeCheck())
+            if (WallCheck() || EdgeCheck() || GroundCheckToTurn())
             {
                 transform.localScale = new Vector2(transform.localScale.x * -1f, transform.localScale.y);
                 moveSpeed *= -1f;
@@ -75,13 +76,11 @@ public class EnemyMovement : MonoBehaviour
 
     private bool EdgeCheck()
     {
-        // Cast a ray downwards from the enemy's feet
-        Vector2 rayStart = transform.position - new Vector3(0f, GetComponent<Collider2D>().bounds.extents.y, 0f);
-        Vector2 rayDirection = -transform.up;
+        return Physics2D.OverlapCircle(edgeCheck.position, radius, jumpableGround);
+    }
 
-        RaycastHit2D hit = Physics2D.Raycast(rayStart, rayDirection, rayDistance);
-
-        // If the ray doesn't hit anything, it means the enemy is at the edge of a platform
-        return hit.collider != null;
+    private bool GroundCheckToTurn()
+    {
+        return Physics2D.OverlapCircle(groundCheck.position, radius, jumpableGround);
     }
 }
