@@ -10,12 +10,15 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text playerHealthValue;
     [SerializeField] private Text playerDamageValue;
     [SerializeField] private Text enemyDamageValue;
+    [SerializeField] private Text defeatObjective;
     private Player player;
     private PlayerAttack playerAttack;
     private Enemy enemy;
     private Enemy[] enemies;
     private float timeToAppear = .5f;
     private float timeWhenDisappear;
+    private int defeatObjectiveValues;
+    private int defeatedEnemiesCount;
     void Start()
     {
         player = FindObjectOfType<Player>();
@@ -26,7 +29,7 @@ public class UIManager : MonoBehaviour
         {
             enemy.onBeingHitByPlayer += EnemyHit;
         }
-
+        defeatObjectiveValues = GameManager._instance.GetDefeatObjective();
         playerAttack = player.GetComponentInChildren<PlayerAttack>();
     }
 
@@ -34,6 +37,7 @@ public class UIManager : MonoBehaviour
     void Update()
     {
         PlayerHealthUpdate();
+        UpdateObjective();
         if(enemyDamageValue.enabled && Time.time >= timeWhenDisappear){
             enemyDamageValue.enabled = false;
         }
@@ -62,4 +66,19 @@ public class UIManager : MonoBehaviour
             timeWhenDisappear = Time.time + timeToAppear;
         }
     }
+
+    private void UpdateObjective(){
+        defeatedEnemiesCount = 0;
+
+        foreach (Enemy enemy in enemies)
+        {
+            if (enemy.GetIsDeadEnemy()) 
+            {
+                defeatedEnemiesCount++;
+            }
+        }
+        defeatObjective.text = ($"Objective: {defeatedEnemiesCount}/{defeatObjectiveValues}");
+    }
+
+    public int GetEnemyDeathValues() => defeatedEnemiesCount;
 }

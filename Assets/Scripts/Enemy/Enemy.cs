@@ -13,6 +13,8 @@ public class Enemy : MonoBehaviour
     private Rigidbody2D _rigidbody2D;
     [SerializeField] private Vector2 knockBack;
     private EnemyAttack enemyAttack;
+    private EnemyMovement enemyMovement;
+    private UIManager uIManager;
     private bool _hasTarget = false;
     private Player player;
     private bool isDead = false;
@@ -28,6 +30,8 @@ public class Enemy : MonoBehaviour
         anim = GetComponent<Animator>();
         _rigidbody2D = GetComponent<Rigidbody2D>();
         enemyAttack = GetComponentInChildren<EnemyAttack>();
+        enemyMovement = GetComponent<EnemyMovement>();
+        uIManager = FindObjectOfType<UIManager>();
     }
 
     public bool hasTarget
@@ -38,6 +42,16 @@ public class Enemy : MonoBehaviour
             _hasTarget = value;
             anim.SetBool("hasTarget", value);
             anim.SetTrigger("Attack");
+        }
+    }
+
+    public bool IsDead
+    {
+        get { return isDead; }
+        private set
+        {
+            isDead = value;
+            anim.SetBool("isDead", value);
         }
     }
 
@@ -76,7 +90,7 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
-        isDead = true;
+        IsDead = true;
         _rigidbody2D.bodyType = RigidbodyType2D.Static;
         anim.SetTrigger("death");
         Destroy(this.gameObject, 2f);
@@ -97,4 +111,5 @@ public class Enemy : MonoBehaviour
     public Vector2 GetEnemyPos() => this.gameObject.transform.position;
     public int GetEnemyDamage() => damage;
     public int GetPlayerDamage() => playerDamage;
+    public bool GetIsDeadEnemy() => isDead;
 }
