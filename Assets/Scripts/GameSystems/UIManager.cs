@@ -68,17 +68,8 @@ public class UIManager : MonoBehaviour
     }
 
     private void UpdateObjective(){
-        defeatedEnemiesCount = 0;
-
-        foreach (Enemy enemy in enemies)
-        {
-            if (enemy.GetIsDeadEnemy()) 
-            {
-                defeatedEnemiesCount++;
-            }
-        }
+        defeatedEnemiesCount = GameManager._instance.GetCurrentDefeatObjective();
         defeatObjective.text = ($"Objective: {defeatedEnemiesCount}/{defeatObjectiveValues}");
     }
 
-    public int GetEnemyDeathValues() => defeatedEnemiesCount;
 }

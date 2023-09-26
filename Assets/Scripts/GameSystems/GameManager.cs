@@ -8,20 +8,21 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager _instance { get; private set; }
     private Player playerGameObject;
+    private Enemy[] enemies;
     private UIManager uIManager;
     [SerializeField] private int stage;
     public int lives { get; private set; }
 
-    private static int currentDefeatObjective;
+    private int currentDefeatObjective;
     private int defeatObjective;
 
     private void Awake() {
+        Debug.Log("Awake Game Manager");
         if (_instance != null)
         {
             Destroy(this.gameObject);
         } else{
             _instance = this;
-            DontDestroyOnLoad(this.gameObject);
         }
     }
 
@@ -32,22 +33,23 @@ public class GameManager : MonoBehaviour
     }
 
     private void Start() {
+        Debug.Log("Start Game Manager");
         playerGameObject = FindObjectOfType<Player>();
-        lives = playerGameObject.GetPlayerHealth();
-        uIManager = FindObjectOfType<UIManager>();
-        if (SceneManager.GetActiveScene().name != $"Stage-{stage}") {
-            NewGame();
+        enemies = FindObjectsOfType<Enemy>();
+        if(playerGameObject != null){
+            lives = playerGameObject.GetPlayerHealth(); 
         }
+        uIManager = FindObjectOfType<UIManager>();
         defeatObjective = GameObject.FindGameObjectsWithTag("Enemy").Length;
     }
 
     // Update is called once per frame
     private void Update()
     {
-        
+        GetEnemyDeath();
     }
 
-    private void NewGame(){
+    public void NewGame(){
         LoadLevel(stage);
     }
 
@@ -57,7 +59,6 @@ public class GameManager : MonoBehaviour
     }
 
     private void NextLevel(){
-        currentDefeatObjective = uIManager.GetEnemyDeathValues();
         if(currentDefeatObjective == defeatObjective){
             LoadLevel(stage + 1);
         }
@@ -79,5 +80,16 @@ public class GameManager : MonoBehaviour
         NewGame();
     }
 
+    private void GetEnemyDeath() {
+        currentDefeatObjective = 0;
+        foreach (Enemy enemy in enemies)
+        {
+            if (enemy.GetIsDeadEnemy()) 
+            {
+                currentDefeatObjective++;
+            }
+        }
+    }
     public int GetDefeatObjective() => defeatObjective;
+    public int GetCurrentDefeatObjective() => currentDefeatObjective;
 }
