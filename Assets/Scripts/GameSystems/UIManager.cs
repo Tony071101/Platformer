@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text playerDamageValue;
     [SerializeField] private Text enemyDamageValue;
     [SerializeField] private Text defeatObjective;
+    [SerializeField] private GameObject nextStageCanvas;
     private Player player;
     private PlayerAttack playerAttack;
     private Enemy enemy;
@@ -29,7 +30,6 @@ public class UIManager : MonoBehaviour
         {
             enemy.onBeingHitByPlayer += EnemyHit;
         }
-        defeatObjectiveValues = GameManager._instance.GetDefeatObjective();
         playerAttack = player.GetComponentInChildren<PlayerAttack>();
     }
 
@@ -69,7 +69,11 @@ public class UIManager : MonoBehaviour
 
     private void UpdateObjective(){
         defeatedEnemiesCount = GameManager._instance.GetCurrentDefeatObjective();
-        defeatObjective.text = ($"Objective: {defeatedEnemiesCount}/{defeatObjectiveValues}");
+        defeatObjectiveValues = GameManager._instance.GetDefeatObjective();
+        defeatObjective.text = ($"Defeat all Enemies: {defeatedEnemiesCount}/{defeatObjectiveValues}");
     }
 
+    public void ShowNextStageUI(){
+        nextStageCanvas.SetActive(true);
+    }
 }

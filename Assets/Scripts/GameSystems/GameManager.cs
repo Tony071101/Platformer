@@ -36,17 +36,18 @@ public class GameManager : MonoBehaviour
         Debug.Log("Start Game Manager");
         playerGameObject = FindObjectOfType<Player>();
         enemies = FindObjectsOfType<Enemy>();
+        defeatObjective = GameObject.FindGameObjectsWithTag("Enemy").Length;
         if(playerGameObject != null){
             lives = playerGameObject.GetPlayerHealth(); 
         }
         uIManager = FindObjectOfType<UIManager>();
-        defeatObjective = GameObject.FindGameObjectsWithTag("Enemy").Length;
     }
 
     // Update is called once per frame
     private void Update()
     {
         GetEnemyDeath();
+        GameNextStage();
     }
 
     public void NewGame(){
@@ -58,10 +59,8 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene($"Stage-{stage}");
     }
 
-    private void NextLevel(){
-        if(currentDefeatObjective == defeatObjective){
-            LoadLevel(stage + 1);
-        }
+    public void NextLevel(){
+        LoadLevel(stage + 1);
     }
     public void ResetLevel(float delay){
         Invoke(nameof(ResetLevel), delay);
@@ -88,6 +87,13 @@ public class GameManager : MonoBehaviour
             {
                 currentDefeatObjective++;
             }
+        }
+    }
+
+    private void GameNextStage(){
+        if(currentDefeatObjective == defeatObjective){
+            uIManager.ShowNextStageUI();
+            playerGameObject.enabled = false;
         }
     }
     public int GetDefeatObjective() => defeatObjective;
