@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
@@ -12,6 +13,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text enemyDamageValue;
     [SerializeField] private Text defeatObjective;
     [SerializeField] private GameObject nextStageCanvas;
+    [SerializeField] private GameObject pauseMenu;
+    [SerializeField] private GameObject thankyouCanvas;
     private Player player;
     private PlayerAttack playerAttack;
     private Enemy enemy;
@@ -20,6 +23,8 @@ public class UIManager : MonoBehaviour
     private float timeWhenDisappear;
     private int defeatObjectiveValues;
     private int defeatedEnemiesCount;
+    private static bool gameIsPaused = false;
+    
     void Start()
     {
         player = FindObjectOfType<Player>();
@@ -45,6 +50,7 @@ public class UIManager : MonoBehaviour
         if(playerDamageValue.enabled && Time.time >= timeWhenDisappear){
             playerDamageValue.enabled = false;
         }
+        PauseGame();
     }
 
     private void PlayerHealthUpdate(){
@@ -75,5 +81,42 @@ public class UIManager : MonoBehaviour
 
     public void ShowNextStageUI(){
         nextStageCanvas.SetActive(true);
+    }
+
+    public void ThankYouCanvas(){
+        thankyouCanvas.SetActive(true);
+    }
+
+    private void PauseGame() {
+        if(Input.GetKeyDown(KeyCode.Escape)) {
+            if(gameIsPaused){
+                GameResume();
+            }
+            else{
+                GamePause();
+            }
+        }
+    }
+
+    public void GameResume(){
+        pauseMenu.SetActive(false);
+        Time.timeScale = 1f;
+        gameIsPaused = false;
+    }
+
+    public void GamePause(){
+        pauseMenu.SetActive(true);
+        Time.timeScale = 0;
+        gameIsPaused = true;
+    }
+
+    public void ReturnHomeScene(){
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(0);
+    }
+
+    public void RestartLevel(){
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -10,14 +9,13 @@ public class GameManager : MonoBehaviour
     private Player playerGameObject;
     private Enemy[] enemies;
     private UIManager uIManager;
-    [SerializeField] private int stage;
+    private int stage = 0;
     public int lives { get; private set; }
 
     private int currentDefeatObjective;
     private int defeatObjective;
 
     private void Awake() {
-        Debug.Log("Awake Game Manager");
         if (_instance != null)
         {
             Destroy(this.gameObject);
@@ -33,7 +31,6 @@ public class GameManager : MonoBehaviour
     }
 
     private void Start() {
-        Debug.Log("Start Game Manager");
         playerGameObject = FindObjectOfType<Player>();
         enemies = FindObjectsOfType<Enemy>();
         defeatObjective = GameObject.FindGameObjectsWithTag("Enemy").Length;
@@ -69,7 +66,7 @@ public class GameManager : MonoBehaviour
     private void ResetLevel(){
         lives--;
         if(lives > 0) {
-            LoadLevel(stage);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }else{
             GameOver();
         }
@@ -91,11 +88,22 @@ public class GameManager : MonoBehaviour
     }
 
     private void GameNextStage(){
-        if(currentDefeatObjective == defeatObjective){
-            uIManager.ShowNextStageUI();
-            playerGameObject.enabled = false;
+        if(currentDefeatObjective != 0 && defeatObjective != 0){
+            if(currentDefeatObjective == defeatObjective){
+                if(SceneManager.GetSceneByName("Stage-1").isLoaded){
+                    uIManager.ThankYouCanvas();
+                }else{
+                    uIManager.ShowNextStageUI();
+                }
+                playerGameObject.enabled = false;
+            }
         }
     }
+
+    public void Quit(){
+        Application.Quit();
+    }
+
     public int GetDefeatObjective() => defeatObjective;
     public int GetCurrentDefeatObjective() => currentDefeatObjective;
 }
