@@ -2,85 +2,329 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
+using UnityEngine.InputSystem;
+using Unity.VisualScripting;
 public class Player : MonoBehaviour
 {
-    // Start is called before the first frame update
-    public static Player Instance { get; private set; }
-    public event EventHandler onMove;
-    public event EventHandler onAttack;
-    public event EventHandler onBeingHit;
-    public event Action<Vector2> onKnockBack;
-    private HealthSystem healthSystem;
-    private Enemy enemy;
-    private Animator anim;
-    private int health = 100;
-    private bool isDead = false;
-    private int enemyDamage;
-    private Rigidbody2D _rigidbody2D;
+    #region Variables
+    private TouchingDirections touchingDirections;
+    private Damageable damageable;
+    public Rigidbody2D _rigidbody { get; private set; }
+    public Animator _anim { get; private set; }
 
-    [SerializeField] private Vector2 knockBack;
-    private void Awake()
-    {
-        if (Instance != null)
-        {
-            Destroy(this.gameObject);
-        }
-        Instance = this;
-    }
-    private void Start()
-    {
-        anim = GetComponent<Animator>();
-        healthSystem = GetComponent<HealthSystem>();
-        enemy = FindObjectOfType<Enemy>();
-        _rigidbody2D = GetComponent<Rigidbody2D>();
-    }
+    private Vector2 horizontalMovement;
 
-    // Update is called once per frame
-    private void Update()
-    {
-        Move();
+    [Header("Move")]
+    private float moveSpeed = 10f;
+    private float dashSpeed = 25f;
+    private float resetTimerForDash = 0.2f;
 
-        if (Input.GetButtonDown("Fire1"))
-        {
-            Attack();
+    [Header("Jump")]
+    private float jumpImpulse = 12f;
+    private float onAirSpeed = 10f;
+    private int maxJump = 2;
+    private int jumpsRemaining;
+    private float hasJumpedOnce {
+        get {
+            return _anim.GetFloat(AnimationStrings.yVelocity);
         }
     }
 
+    [Header("Gravity")]
+    private float baseGravity = 2f;
+    private float maxFallSpeed = 25f;
+    private float fallSpeedMultiplier = 2f; 
 
+    [Header("OnWall")]
+    private float wallSlideSpeed = 2f;
+    private bool isWallSliding;
+    private bool isWallJumping;
+    private float wallJumpDirection;
+    private float wallJumpTime = 0.5f;
+    private float wallJumpTimer;
+    private float skillCoolDown = 2f; //Can be modified
+    private bool isDashCooldown = false;
+    private Vector2 wallJumpImpulse = new Vector2(10f, 11f);
 
+    private bool _isFacingRight = true;
+    public bool IsFacingRight { get { return _isFacingRight; } private set {
+        if(_isFacingRight != value)
+        {
+            //FLip the localscale to face opposite direction
+            transform.localScale *= new Vector2(-1, 1);
+        }
+        
+        _isFacingRight = value;
+    } }
+    public bool CanMove
+    {
+        get
+        {
+            return _anim.GetBool(AnimationStrings.canMove);
+        }
+    }
+    public bool IsAlive {
+        get {
+            return _anim.GetBool(AnimationStrings.isAlive);
+        }
+    }
+
+    private bool _isMoving = false;
+    public bool IsMoving 
+    { 
+        get
+        {
+            return _isMoving;
+        } 
+        private set
+        {
+            _isMoving = value;
+            _anim.SetBool(AnimationStrings.isMoving, value);
+        }
+    }
+    
+    private bool _isDashing = false;
+    public bool IsDashing
+    {
+        get
+        {
+            return _isDashing;
+        }
+        private set
+        {
+            _isDashing = value;
+            _anim.SetBool(AnimationStrings.isDashing, value);
+        }
+    }
+    
+    public float CurrentSpeed 
+    {
+        get
+        {
+            if(CanMove)
+            {
+                if(IsMoving && !touchingDirections.IsOnWall)
+                {
+                    if(touchingDirections.IsGrounded)
+                    {
+                        if(IsDashing)
+                        {
+                            return dashSpeed;
+                        }
+                        else
+                        {
+                            return moveSpeed;
+                        }
+                    } else 
+                    {
+                        if(IsDashing) {
+                            return dashSpeed;
+                        } else {
+                            return onAirSpeed;
+                        }
+                    }
+                } else
+                {
+                    //Idle
+                    return 0;
+                }
+            } else
+            {
+                //Move locked
+                return 0;
+            }
+        }
+    }
+    #endregion
+
+    private void Start() 
+    {
+        _rigidbody = GetComponent<Rigidbody2D>();
+        _anim = GetComponentInChildren<Animator>();
+        touchingDirections = GetComponent<TouchingDirections>();
+        damageable = GetComponent<Damageable>();
+        if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            UIManager.Instance.ActivatePlayerUI();
+        }
+        MusicManager.Instance.PlayGameplayAudio();
+    }
+
+    private void Update() {
+        HandleCheckDoubleJump();
+
+        HandleGravity();
+
+        HandleWallSlide();
+
+        ProcessWallJump();
+    }
+
+    private void FixedUpdate() 
+    {
+        if(!isWallJumping) {
+            Move();
+        }
+    }
+
+    #region Handle Functions
     private void Move()
     {
-        onMove?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void Attack()
-    {
-        onAttack?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (!isDead && other.gameObject.layer == LayerMask.NameToLayer("EnemyHitBox"))
-        {
-            enemyDamage = enemy.GetEnemyDamage();
-            health = healthSystem.Hit(health, enemyDamage);
-            if(health <= 0 ){
-                Die();
+        if(!damageable.LockVelocity) {
+            if(touchingDirections.IsOnWall) {
+                _rigidbody.velocity = new Vector2(0,0);
+            } else {
+                _rigidbody.velocity = new Vector2(horizontalMovement.x * CurrentSpeed, _rigidbody.velocity.y);      
             }
-            anim.SetTrigger("hurt");
-            onKnockBack?.Invoke(knockBack);
-            onBeingHit?.Invoke(this, EventArgs.Empty);
+        }
+
+        _anim.SetFloat(AnimationStrings.yVelocity, _rigidbody.velocity.y);
+    }
+
+    private void Jump()
+    {
+        _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpImpulse);
+        _anim.SetTrigger(AnimationStrings.jumpTrigger);
+        jumpsRemaining--;
+    }
+
+    private void HandleCheckDoubleJump() {
+        if(touchingDirections.IsGrounded) {
+            jumpsRemaining = maxJump;
         }
     }
 
-    private void Die()
-    {
-        isDead = true;
-        _rigidbody2D.bodyType = RigidbodyType2D.Static;
-        anim.SetTrigger("death");
+    private void HandleGravity() {
+        if(_rigidbody.velocity.y < 0) {
+            _rigidbody.gravityScale = baseGravity * fallSpeedMultiplier; //Fall faster
+            _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, Mathf.Max(_rigidbody.velocity.y, - maxFallSpeed)); 
+        } else {
+            _rigidbody.gravityScale = baseGravity;
+        }
     }
-    public Vector2 GetPlayerPos() => this.gameObject.transform.position;
 
-    public int GetPlayerHealth() => health;
+    private void HandleWallSlide() {
+        if(!touchingDirections.IsGrounded && CanMove && touchingDirections.IsOnWall) {
+            isWallSliding = true;
+            _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, Mathf.Max(_rigidbody.velocity.y, -wallSlideSpeed));
+        } else {
+            isWallSliding = false;
+        }
+    }
+
+    private void ResetBoolDashing()
+    {
+        IsDashing = false;
+    }
+    
+    private void ResetDashCooldown()
+    {
+        isDashCooldown = false;
+    }
+
+    private void SetFacingDirection(Vector2 horizontalMovement)
+    {
+        if(horizontalMovement.x > 0 && !IsFacingRight)
+        {
+            //Face right
+            IsFacingRight = true;
+        } else if(horizontalMovement.x < 0 && IsFacingRight)
+        {
+            //Face left
+            IsFacingRight = false;
+        }
+    }
+
+    private void ProcessWallJump() {
+        if(isWallSliding && !isWallJumping) {
+            wallJumpDirection = transform.localScale.x > 0 ? -1 : 1;
+            wallJumpTimer = wallJumpTime;
+        } else if (wallJumpTimer > 0f) {
+            wallJumpTimer -= Time.deltaTime;
+        }
+    }
+
+    private void CancelWallJump() {
+        isWallJumping = false;
+    }
+    #endregion
+
+    #region Event Methods
+    public void OnMove(InputAction.CallbackContext context)
+    {
+        horizontalMovement = context.ReadValue<Vector2>();
+
+        if(IsAlive) {
+            IsMoving = horizontalMovement != Vector2.zero;  
+
+            SetFacingDirection(horizontalMovement);
+        } else {
+            IsMoving = false;
+        }
+    }
+
+    public void OnDash(InputAction.CallbackContext context)
+    {
+        if(context.started && !isDashCooldown)
+        {
+            if(IsMoving && IsAlive) {
+                IsDashing = true;
+
+                float dashDirection = IsFacingRight ? 1 : -1;
+
+                _rigidbody.velocity = new Vector2(dashDirection * dashSpeed, _rigidbody.velocity.y);
+
+                Invoke("ResetBoolDashing", resetTimerForDash);
+                isDashCooldown = true;
+                Invoke(nameof(ResetDashCooldown), skillCoolDown);
+            }
+        }
+    }
+
+    public void OnJump(InputAction.CallbackContext context)
+    { 
+        if(context.started && CanMove && IsAlive)
+        {
+            if(jumpsRemaining > 0)
+            {
+                if (jumpsRemaining == maxJump || hasJumpedOnce < 0)
+                {
+                    Jump();
+                }
+            }
+
+            if(wallJumpTimer > 0f && isWallSliding){
+                isWallJumping = true;
+                _rigidbody.velocity = new Vector2(wallJumpDirection * wallJumpImpulse.x, wallJumpImpulse.y);
+                wallJumpTimer = 0f;
+
+                Vector2 simulatedHorizontalMovement = new Vector2(wallJumpDirection, 0);
+                SetFacingDirection(simulatedHorizontalMovement);
+
+                Invoke(nameof(CancelWallJump), wallJumpTime + 0.1f);
+            }
+        } 
+        else if(context.canceled) {
+            _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, _rigidbody.velocity.y * 0.5f);
+            jumpsRemaining--;
+        }
+    }
+
+    public void OnAttack(InputAction.CallbackContext context)
+    {
+        if(context.started)
+        {
+            _anim.SetTrigger(AnimationStrings.attackTrigger);
+        }
+    }
+
+    public void OnHit(int dmg, Vector2 knockBack) {
+        if(IsAlive) {
+            _rigidbody.velocity = new Vector2(knockBack.x, _rigidbody.velocity.y + knockBack.y);
+        } else {
+            _rigidbody.velocity = new Vector2(0,0);
+            UIManager.Instance.ActivateGameOverPanel();
+        }
+    }
+    #endregion
 }

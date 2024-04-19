@@ -5,111 +5,134 @@ using System;
 
 public class Enemy : MonoBehaviour
 {
-    private int health = 100;
-    private int damage = 10;
-    private int playerDamage;
-    private HealthSystem healthSystem;
-    private Animator anim;
-    private Rigidbody2D _rigidbody2D;
-    [SerializeField] private Vector2 knockBack;
-    private EnemyAttack enemyAttack;
-    private EnemyMovement enemyMovement;
-    private UIManager uIManager;
+    private float walkAcceleration = 50f;
+    private float maxSpeed = 3f;
+    [SerializeField] private DetectionZone attackZone;
+    [SerializeField] private DetectionZone cliffDetectionZone;
+    private Animator _anim;
+    private Vector2 walkDirectionVector = Vector2.right;
+    private Damageable damageable;
+    public Rigidbody2D _rigidbody { get; private set; }
+    private TouchingDirections touchingDirections;
+    public enum WalkableDirections { Right, Left }
+    private WalkableDirections _walkDirections;
+    public WalkableDirections WalkDirections 
+    {
+        get { return _walkDirections; }
+        set { 
+            if(_walkDirections != value)
+            {
+                //Direction flipped
+                gameObject.transform.localScale = new Vector2(gameObject.transform.localScale.x * -1, gameObject.transform.localScale.y);
+
+                if(value == WalkableDirections.Right)
+                {
+                    walkDirectionVector = Vector2.right;
+                } else if(value == WalkableDirections.Left)
+                {
+                    walkDirectionVector = Vector2.left;
+                }
+            }    
+            _walkDirections = value; 
+        }
+    }
+
     private bool _hasTarget = false;
-    private Player player;
-    private bool isDead = false;
-    private bool canTakeDamage = true;
-    private float attackedCDTime = .1f;
-    public event EventHandler onBeingHitByPlayer;
-
-    // Start is called before the first frame update
-    private void Start()
-    {
-        player = FindObjectOfType<Player>();
-        healthSystem = GetComponent<HealthSystem>();
-        anim = GetComponent<Animator>();
-        _rigidbody2D = GetComponent<Rigidbody2D>();
-        enemyAttack = GetComponentInChildren<EnemyAttack>();
-        enemyMovement = GetComponent<EnemyMovement>();
-        uIManager = FindObjectOfType<UIManager>();
-    }
-
-    public bool hasTarget
-    {
-        get { return _hasTarget; }
-        private set
-        {
-            _hasTarget = value;
-            anim.SetBool("hasTarget", value);
-            anim.SetTrigger("Attack");
+    public bool Hastarget { 
+        get {
+        return _hasTarget;
+        } private set {
+        _hasTarget = value;
+        
+        if(_anim == null) {
+            return;
         }
+        _anim.SetBool(AnimationStrings.hasTarget, value);
+        } 
     }
 
-    public bool IsDead
-    {
-        get { return isDead; }
-        private set
-        {
-            isDead = value;
-            anim.SetBool("isDead", value);
-        }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        hasTarget = enemyAttack.detectedColliders.Count > 0;
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (!isDead && canTakeDamage && collision.gameObject.layer == LayerMask.NameToLayer("PlayerHitBox"))
-        {
-            canTakeDamage = false; // Prevent further damage for a short period
-            StartCoroutine(EnableDamageAfterCooldown());
+    public bool CanMove {
+        get {
             
-            PlayerAttack playerAttack = collision.gameObject.GetComponent<PlayerAttack>();
-            if (playerAttack != null)
-            {
-                playerDamage = playerAttack.Damage;
+            if(_anim == null) {
+                return false;
             }
-            else
-            {
-                playerDamage = 0; // Default damage if the PlayerAttack script is missing
-            }
-            health = healthSystem.Hit(health, playerDamage);
-            if (health <= 0)
-            {
-                Die();
-            }
-            anim.SetTrigger("Hurt");
-            IsKnockedBack(knockBack);
-            onBeingHitByPlayer?.Invoke(this, EventArgs.Empty);
+            return _anim.GetBool(AnimationStrings.canMove);
         }
     }
 
-    private void Die()
-    {
-        IsDead = true;
-        _rigidbody2D.bodyType = RigidbodyType2D.Static;
-        anim.SetTrigger("death");
-        Destroy(this.gameObject, 2f);
+    public float AttackCd { 
+        get {
+            if(_anim == null) {
+                return 0;
+            }
+            return _anim.GetFloat(AnimationStrings.attackCd);
+        } 
+        private set {
+            if(_anim == null) {
+            return;
+            }
+            _anim.SetFloat(AnimationStrings.attackCd, Mathf.Max(value, 0));
+        }
     }
 
-    private void IsKnockedBack(Vector2 knockBack)
+    private void Awake() 
     {
-        Vector2 knockbackDirection = ((Vector2)transform.position - player.GetPlayerPos()).normalized;
-        _rigidbody2D.velocity = new Vector2(knockBack.x * -knockbackDirection.x, knockBack.y);
+        _rigidbody = GetComponent<Rigidbody2D>();
+        touchingDirections = GetComponent<TouchingDirections>();
+        _anim = GetComponentInChildren<Animator>();
+        damageable= GetComponent<Damageable>();
     }
 
-    private IEnumerator EnableDamageAfterCooldown()
-    {
-        yield return new WaitForSeconds(attackedCDTime); // Adjust the cooldown time as needed
-        canTakeDamage = true;
+    private void Update() {
+        Hastarget = attackZone.detectedColliders.Count > 0;
+
+        if(AttackCd > 0) {
+            AttackCd -= Time.deltaTime; 
+        }
     }
 
-    public Vector2 GetEnemyPos() => this.gameObject.transform.position;
-    public int GetEnemyDamage() => damage;
-    public int GetPlayerDamage() => playerDamage;
-    public bool GetIsDeadEnemy() => isDead;
+    private void FixedUpdate() {
+        Move();
+    }
+
+    private void Move()
+    {
+        if(touchingDirections.IsGrounded && touchingDirections.IsOnWall)
+        {
+            FlipDirection();
+        }
+
+        if(!damageable.LockVelocity) {
+            if(CanMove) {
+                _rigidbody.velocity = new Vector2(Mathf.Clamp(
+                    _rigidbody.velocity.x + (walkAcceleration * walkDirectionVector.x * Time.fixedDeltaTime), -maxSpeed, 
+                    maxSpeed), 
+                    _rigidbody.velocity.y);
+            } else {
+                _rigidbody.velocity = new Vector2(0, _rigidbody.velocity.y);
+            }
+        }
+    }
+
+    private void FlipDirection()
+    {
+        if(WalkDirections == WalkableDirections.Right)
+        {
+            WalkDirections = WalkableDirections.Left;
+        } else if(WalkDirections == WalkableDirections.Left)
+        {
+            WalkDirections = WalkableDirections.Right;
+        }
+    }
+
+    public void OnHit(int dmg, Vector2 knockBack) {
+        _rigidbody.velocity = new Vector2(knockBack.x, _rigidbody.velocity.y + knockBack.y);
+    }
+
+    public void OnCliffDetected() {
+        if(touchingDirections.IsGrounded) {
+            FlipDirection();
+        }
+    }
 }

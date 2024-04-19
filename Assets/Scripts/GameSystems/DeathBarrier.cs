@@ -4,13 +4,10 @@ using UnityEngine;
 
 public class DeathBarrier : MonoBehaviour
 {
-    private void OnTriggerEnter2D(Collider2D other) {
-        if(other.CompareTag("Player")){
-            other.gameObject.SetActive(false);
-            GameManager._instance.ResetLevel(3f);
-        }
-        else{
-            Destroy(other.gameObject);
+    private void OnCollisionEnter2D(Collision2D other) {
+        Destroy(other.gameObject);
+        if(other.gameObject.CompareTag("Player")){
+            UIManager.Instance.ActivateGameOverPanel();
         }
     }
 }

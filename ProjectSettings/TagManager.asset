@@ -20,9 +20,9 @@ TagManager:
   - Enemy
   - EnemyHitBox
   - EnemyDetectionZone
-  - 
-  - 
-  - 
+  - GroundDetection
+  - Pickup
+  - Spike
   - 
   - 
   - 
@@ -54,4 +54,7 @@ TagManager:
     locked: 0
   - name: Enemy
     uniqueID: 3252891337
+    locked: 0
+  - name: Items
+    uniqueID: 1666757851
     locked: 0
