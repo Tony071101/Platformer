@@ -11,7 +11,7 @@ public class AttackSystem : MonoBehaviour
         Damageable damageable = other.GetComponent<Damageable>();
 
         if(damageable != null) {
-            Vector2 deliveredKnockBack = transform.parent.parent.localScale.x > 0 ? knockBack : new Vector2(-knockBack.x, knockBack.y);
+            Vector2 deliveredKnockBack = transform.parent.localScale.x > 0 ? knockBack : new Vector2(-knockBack.x, knockBack.y);
             bool gotHit = damageable.Hit(attackDmg, deliveredKnockBack);
         }
     }

@@ -256,7 +256,8 @@ public class Player : MonoBehaviour
         {
             //Face right
             IsFacingRight = true;
-        } else if(horizontalMovement.x < 0 && IsFacingRight)
+        } 
+        else if(horizontalMovement.x < 0 && IsFacingRight)
         {
             //Face left
             IsFacingRight = false;

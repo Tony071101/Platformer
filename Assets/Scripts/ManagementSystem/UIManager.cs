@@ -102,6 +102,7 @@ public class UIManager : MonoBehaviour
     
     public void GameResume(){
         Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
         pauseMenu.SetActive(false);
         Time.timeScale = 1f;
         GameManager.Instance.gameIsPaused = false;
@@ -109,6 +110,8 @@ public class UIManager : MonoBehaviour
     }
 
     public void GamePause(){
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
         pauseMenu.SetActive(true);
         Time.timeScale = 0;
         GameManager.Instance.gameIsPaused = true;
@@ -117,12 +120,14 @@ public class UIManager : MonoBehaviour
 
     public void ActivateGameOverPanel() {
         Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
         GameManager.Instance.canPauseGame = false;
         gameOverPanel.SetActive(true);
     }
 
     public void ActivateGameFinishPanel() {
         Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
         GameManager.Instance.canPauseGame = false;
         gameFinishPanel.SetActive(true);
     }

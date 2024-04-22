@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
 
     private void LoadLevel(int stage){
         Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
         this.stage = stage;
         SceneManager.LoadScene($"Stage-{stage}");
     }
