@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour
     }
 
     private void LoadLevel(int stage){
+        Cursor.visible = false;
         this.stage = stage;
         SceneManager.LoadScene($"Stage-{stage}");
     }
@@ -44,6 +45,7 @@ public class GameManager : MonoBehaviour
     public void ReturnMenu() {
         stage = 0;
         canPauseGame = false;
+        gameIsPaused = false;
         SceneManager.LoadScene("MenuScene");
         MusicManager.Instance.StopGameplayAudio();
         MusicManager.Instance.PlayMenuAudio();

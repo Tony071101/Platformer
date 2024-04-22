@@ -12,9 +12,8 @@ public class Player : MonoBehaviour
     public Rigidbody2D _rigidbody { get; private set; }
     public Animator _anim { get; private set; }
 
-    private Vector2 horizontalMovement;
-
     [Header("Move")]
+    private Vector2 horizontalMovement;
     private float moveSpeed = 10f;
     private float dashSpeed = 25f;
     private float resetTimerForDash = 0.2f;
@@ -24,11 +23,6 @@ public class Player : MonoBehaviour
     private float onAirSpeed = 10f;
     private int maxJump = 2;
     private int jumpsRemaining;
-    private float hasJumpedOnce {
-        get {
-            return _anim.GetFloat(AnimationStrings.yVelocity);
-        }
-    }
 
     [Header("Gravity")]
     private float baseGravity = 2f;
@@ -44,7 +38,6 @@ public class Player : MonoBehaviour
     private float wallJumpTimer;
     private float skillCoolDown = 2f; //Can be modified
     private bool isDashCooldown = false;
-    private Vector2 wallJumpImpulse = new Vector2(10f, 11f);
 
     private bool _isFacingRight = true;
     public bool IsFacingRight { get { return _isFacingRight; } private set {
@@ -157,7 +150,7 @@ public class Player : MonoBehaviour
 
         HandleWallSlide();
 
-        ProcessWallJump();
+        HandleCheckWallJump();
     }
 
     private void FixedUpdate() 
@@ -181,11 +174,33 @@ public class Player : MonoBehaviour
         _anim.SetFloat(AnimationStrings.yVelocity, _rigidbody.velocity.y);
     }
 
+    private void Dash() {
+        if(IsMoving && IsAlive) {
+            IsDashing = true;
+
+            float dashDirection = IsFacingRight ? 1 : -1;
+
+            _rigidbody.velocity = new Vector2(dashDirection * dashSpeed, _rigidbody.velocity.y);
+
+            Invoke("ResetBoolDashing", resetTimerForDash);
+            isDashCooldown = true;
+            Invoke(nameof(ResetDashCooldown), skillCoolDown);
+        }
+    }
+
     private void Jump()
     {
         _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpImpulse);
         _anim.SetTrigger(AnimationStrings.jumpTrigger);
         jumpsRemaining--;
+    }
+
+    private void WallJump() {
+        isWallJumping = true;
+        _rigidbody.velocity = new Vector2(wallJumpDirection * moveSpeed, jumpImpulse);
+        wallJumpTimer = 0f;
+
+        Invoke(nameof(CancelWallJump), wallJumpTime + 0.1f);
     }
 
     private void HandleCheckDoubleJump() {
@@ -212,6 +227,19 @@ public class Player : MonoBehaviour
         }
     }
 
+    private void HandleCheckWallJump() {
+        if(isWallSliding && !isWallJumping) {
+            wallJumpDirection = transform.localScale.x > 0 ? -1 : 1;
+            wallJumpTimer = wallJumpTime;
+        } else if (wallJumpTimer > 0f) {
+            wallJumpTimer -= Time.deltaTime;
+        }
+    }
+
+    private void CancelWallJump() {
+        isWallJumping = false;
+    }
+
     private void ResetBoolDashing()
     {
         IsDashing = false;
@@ -234,19 +262,6 @@ public class Player : MonoBehaviour
             IsFacingRight = false;
         }
     }
-
-    private void ProcessWallJump() {
-        if(isWallSliding && !isWallJumping) {
-            wallJumpDirection = transform.localScale.x > 0 ? -1 : 1;
-            wallJumpTimer = wallJumpTime;
-        } else if (wallJumpTimer > 0f) {
-            wallJumpTimer -= Time.deltaTime;
-        }
-    }
-
-    private void CancelWallJump() {
-        isWallJumping = false;
-    }
     #endregion
 
     #region Event Methods
@@ -267,17 +282,7 @@ public class Player : MonoBehaviour
     {
         if(context.started && !isDashCooldown)
         {
-            if(IsMoving && IsAlive) {
-                IsDashing = true;
-
-                float dashDirection = IsFacingRight ? 1 : -1;
-
-                _rigidbody.velocity = new Vector2(dashDirection * dashSpeed, _rigidbody.velocity.y);
-
-                Invoke("ResetBoolDashing", resetTimerForDash);
-                isDashCooldown = true;
-                Invoke(nameof(ResetDashCooldown), skillCoolDown);
-            }
+            Dash();
         }
     }
 
@@ -287,21 +292,11 @@ public class Player : MonoBehaviour
         {
             if(jumpsRemaining > 0)
             {
-                if (jumpsRemaining == maxJump || hasJumpedOnce < 0)
-                {
-                    Jump();
-                }
+                Jump();
             }
 
             if(wallJumpTimer > 0f && isWallSliding){
-                isWallJumping = true;
-                _rigidbody.velocity = new Vector2(wallJumpDirection * wallJumpImpulse.x, wallJumpImpulse.y);
-                wallJumpTimer = 0f;
-
-                Vector2 simulatedHorizontalMovement = new Vector2(wallJumpDirection, 0);
-                SetFacingDirection(simulatedHorizontalMovement);
-
-                Invoke(nameof(CancelWallJump), wallJumpTime + 0.1f);
+                WallJump();
             }
         } 
         else if(context.canceled) {

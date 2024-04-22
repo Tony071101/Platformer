@@ -101,6 +101,7 @@ public class UIManager : MonoBehaviour
     }
     
     public void GameResume(){
+        Cursor.visible = false;
         pauseMenu.SetActive(false);
         Time.timeScale = 1f;
         GameManager.Instance.gameIsPaused = false;
@@ -115,11 +116,13 @@ public class UIManager : MonoBehaviour
     }
 
     public void ActivateGameOverPanel() {
+        Cursor.visible = true;
         GameManager.Instance.canPauseGame = false;
         gameOverPanel.SetActive(true);
     }
 
     public void ActivateGameFinishPanel() {
+        Cursor.visible = true;
         GameManager.Instance.canPauseGame = false;
         gameFinishPanel.SetActive(true);
     }
